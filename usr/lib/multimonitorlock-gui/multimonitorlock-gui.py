@@ -79,10 +79,10 @@ class MultiMonitorLock(QWidget):
             for image in imagearray:
                 val = val + 1
                 self.image_select = QToolButton()
-                self.image_select.setIcon(QIcon(self.directory + "" + image))
+                self.image_select.setIcon(QIcon(self.directory + "/" + image))
                 self.image_select.setIconSize(QSize(150, 150))
                 self.image_select.setCheckable(True);
-                self.image_select.setObjectName(self.directory + "" + image)
+                self.image_select.setObjectName(self.directory + "/" + image)
                 gbox.addWidget(self.image_select,key,val, Qt.AlignTop)
                 self.group.addButton(self.image_select)
                 self.image_select.clicked.connect(self.item)
