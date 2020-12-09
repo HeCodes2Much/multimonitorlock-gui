@@ -40,7 +40,7 @@ class MultiMonitorLock(QWidget):
             shutil.copy(fn.root_config, fn.home + "/.config/multilock/gui.conf")
 
         self.settings = QSettings()
-        self.directory = self.settings.value("files/folder", None)
+        self.directory = self.settings.value("settings/folder", None)
 
         fn.get_config(self, fn.config)
         if self.directory is None:
@@ -167,7 +167,7 @@ class MultiMonitorLock(QWidget):
         self.disable_buttons()
         directory = QFileDialog.getExistingDirectory(self, 'Select directory')
         if directory:
-            self.settings.setValue("files/folder", directory)
+            self.settings.setValue("settings/folder", directory)
             self.enter_loction_box.setText(directory)
         qApp.exit(MultiMonitorLock.EXIT_CODE_REBOOT)
         self.enable_buttons()
@@ -194,7 +194,7 @@ class MultiMonitorLock(QWidget):
     def default(self):
         self.disable_buttons()
         self.enter_loction_box.setText(self.folder)
-        self.settings.setValue("files/folder", self.folder)
+        self.settings.setValue("settings/folder", self.folder)
         qApp.exit(MultiMonitorLock.EXIT_CODE_REBOOT)
         self.enable_buttons()
 
