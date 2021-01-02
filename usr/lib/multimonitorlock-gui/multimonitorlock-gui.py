@@ -11,9 +11,9 @@ import re
 import shutil
 import subprocess
 import Functions as fn
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
+from PySide6.QtGui import *
+from PySide6.QtCore import *
+from PySide6.QtWidgets import *
 
 def divide_chunks(l, n):
 
@@ -32,7 +32,7 @@ class MultiMonitorLock(QWidget):
     apply_button = None
 
     def __init__(self, parent=None):
-        QMainWindow.__init__(self, parent)
+        QWidget.__init__(self, parent)
         if not fn.os.path.isdir(fn.home + "/.config/multilock"):
             fn.os.mkdir(fn.home + "/.config/multilock")
 
