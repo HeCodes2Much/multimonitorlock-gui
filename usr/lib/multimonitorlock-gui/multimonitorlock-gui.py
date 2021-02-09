@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # =====================================================
-#                  Author TheCynicalTeam
+#                  Author The-Repo-Club
 # =====================================================
 
 import sys
@@ -264,8 +264,8 @@ if __name__ == '__main__':
     currentExitCode = MultiMonitorLock.EXIT_CODE_REBOOT
     while currentExitCode == MultiMonitorLock.EXIT_CODE_REBOOT:
         app = QApplication(sys.argv)
-        QCoreApplication.setOrganizationName("TheCynicalTeam")
-        QCoreApplication.setOrganizationDomain("github.com/TheCynicalTeam")
+        QCoreApplication.setOrganizationName("The-Repo-Club")
+        QCoreApplication.setOrganizationDomain("github.com/The-Repo-Club")
         QCoreApplication.setApplicationName("MultiMonitorLock-Gui")
         Gui = MultiMonitorLock()
         Gui.show()
