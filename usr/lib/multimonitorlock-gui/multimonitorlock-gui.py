@@ -11,9 +11,9 @@ import re
 import shutil
 import subprocess
 import Functions as fn
-from PySide6.QtGui import *
-from PySide6.QtCore import *
-from PySide6.QtWidgets import *
+from PySide2.QtGui import *
+from PySide2.QtCore import *
+from PySide2.QtWidgets import *
 
 def divide_chunks(l, n):
 
@@ -22,7 +22,7 @@ def divide_chunks(l, n):
         yield l[i:i + n]
 
 class MultiMonitorLock(QWidget):
-    EXIT_CODE_REBOOT = -464647564
+    EXIT_CODE_REBOOT = -15123123
     # - SELECT - LOAD - DEFAULT - SEARCH - APPLY
     find_button = None
     load_button = None
@@ -136,11 +136,7 @@ class MultiMonitorLock(QWidget):
         hbox1.addWidget(self.enter_loction_text)
         hbox1.addWidget(self.enter_loction_box)
         hbox1.addWidget(self.find_button)
-        # hbox1.addWidget(self.load_button)
         hbox1.addWidget(self.default_button)
-        # hbox2.addWidget(self.enter_search_text)
-        # hbox2.addWidget(self.enter_search_box)
-        # hbox2.addWidget(self.search_button)
         hbox3.addWidget(self.apply_text)
         hbox3.addWidget(self.close_button)
         hbox3.addWidget(self.apply_button)
@@ -151,8 +147,6 @@ class MultiMonitorLock(QWidget):
 
         vbox.setAlignment(Qt.AlignCenter)
         vbox.setSpacing(25)
-        # hbox.setAlignment(Qt.AlignCenter)
-        # hbox.setSpacing(75)
 
         base = QWidget()
         base.setObjectName("base")
@@ -182,12 +176,6 @@ class MultiMonitorLock(QWidget):
     def load(self):
         self.disable_buttons()
         self.directory = self.enter_loction_box.text()
-        # reply = QMessageBox.question(
-        #     self, "Message",
-        #     "MultiMonitorLock-GUI is about to reload?",
-        #     QMessageBox.Close, QMessageBox.Close)
-        #
-        # if reply == QMessageBox.Close:
         qApp.exit(MultiMonitorLock.EXIT_CODE_REBOOT)
         self.enable_buttons()
 
@@ -200,7 +188,6 @@ class MultiMonitorLock(QWidget):
 
     def search(self):
         self.disable_buttons()
-        # suspend_systemctl(self.cmd_lock)
         self.enable_buttons()
 
     def apply(self):
@@ -263,7 +250,10 @@ class MultiMonitorLock(QWidget):
 if __name__ == '__main__':
     currentExitCode = MultiMonitorLock.EXIT_CODE_REBOOT
     while currentExitCode == MultiMonitorLock.EXIT_CODE_REBOOT:
-        app = QApplication(sys.argv)
+        try:
+            app = QApplication(sys.argv)
+        except RuntimeError:
+            app = QCoreApplication.instance()
         QCoreApplication.setOrganizationName("The-Repo-Club")
         QCoreApplication.setOrganizationDomain("github.com/The-Repo-Club")
         QCoreApplication.setApplicationName("MultiMonitorLock-Gui")
