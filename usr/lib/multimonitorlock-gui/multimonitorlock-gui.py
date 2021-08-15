@@ -12,10 +12,10 @@ import shutil
 import subprocess
 import platform
 import Functions as fn
-from PySide2 import QtCore, QtGui, QtWidgets
-from PySide2.QtGui import *
-from PySide2.QtCore import *
-from PySide2.QtWidgets import *
+from PySide6 import QtCore, QtGui, QtWidgets
+from PySide6.QtGui import *
+from PySide6.QtCore import *
+from PySide6.QtWidgets import *
 
 def divide_chunks(l, n):
 
@@ -335,5 +335,5 @@ if __name__ == '__main__':
         QCoreApplication.setApplicationName("MultiMonitorLock-Gui")
         Gui = SplashScreen()
         Gui.show()
-        currentExitCode = app.exec_()
+        currentExitCode = app.exec()
         app = None
