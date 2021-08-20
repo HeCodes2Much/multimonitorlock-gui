@@ -1,339 +1,267 @@
 #!/usr/bin/env python3
 
-# =====================================================
-#                  Author The-Repo-Club
-# =====================================================
+# =================================================================
+# =                     Author: TheRepoClub                       =
+# =================================================================
 
-import sys
-import getpass
-import os
-import re
-import shutil
-import subprocess
-import platform
+import gi
 import Functions as fn
-from PySide6 import QtCore, QtGui, QtWidgets
-from PySide6.QtGui import *
-from PySide6.QtCore import *
-from PySide6.QtWidgets import *
-
-def divide_chunks(l, n):
-
-    # looping till length l
-    for i in range(0, len(l), n):
-        yield l[i:i + n]
-
-## ==> SPLASH SCREEN
-from ui_splash_screen import Ui_SplashScreen
-
-## ==> GLOBALS
-counter = 0
-
-class MultiMonitorLock(QWidget):
-    EXIT_CODE_REBOOT = -15123123
-    # - SELECT - LOAD - DEFAULT - SEARCH - APPLY
-    find_button = None
-    load_button = None
-    default_button = None
-    search_button = None
-    close_button = None
-    apply_button = None
-
-    def __init__(self, parent=None):
-        QWidget.__init__(self, parent)
-        if not fn.os.path.isdir(fn.home + "/.config/multilock"):
-            fn.os.mkdir(fn.home + "/.config/multilock")
-
-        if not fn.os.path.isfile(fn.home + "/.config/multilock/gui.conf"):
-            shutil.copy(fn.root_config, fn.home + "/.config/multilock/gui.conf")
-
-        self.settings = QSettings()
-        self.directory = self.settings.value("settings/folder", None)
-
-        fn.get_config(self, fn.config)
-        if self.directory is None:
-            self.directory = str(self.folder)
-        else:
-            self.folder = str(self.folder)
-
-        self.image_file = None
-        self.init_ui()
-
-    def init_ui(self):
-        vbox = QVBoxLayout()
-        self.setWindowTitle("Shutdown menu")
-
-        self.title = QLabel("Hello, " + getpass.getuser() + "! What background would you like to chose?")
-
-        hbox1 = QHBoxLayout()
-        hbox2 = QHBoxLayout()
-        hbox3 = QHBoxLayout()
-        hbox3.addStretch()
-        sbox = QScrollArea()
-        sbox.setWidgetResizable(True)
-        sbox.setMinimumSize(QSize(1000, 500))
-        sbox.scrollAreaWidgetContents = QWidget()
-        sbox.setWidget(sbox.scrollAreaWidgetContents)
-        gbox = QGridLayout(sbox.scrollAreaWidgetContents)
-
-        ext = [".png", ".jpg", ".jpeg"]
-        images = [x for x in fn.os.listdir(self.directory) for j in ext if j in x.lower()]
-        imagesA = list(divide_chunks(images, 5))
-        key = 0
-        self.group = QButtonGroup()
-        for imagearray in imagesA:
-            key = key + 1
-            val = 0
-            for image in imagearray:
-                val = val + 1
-                pixmap = QPixmap(self.directory + "/" + image)
-                self.image_select = QPushButton()
-                self.image_select.setIcon(pixmap)
-                self.image_select.setIconSize(QSize(150, 150))
-                self.image_select.setCheckable(True);
-                self.image_select.setObjectName(self.directory + "/" + image)
-                gbox.addWidget(self.image_select,key,val, Qt.AlignTop)
-                self.group.addButton(self.image_select)
-                self.image_select.clicked.connect(self.item)
-
-        self.enter_loction_text = QLabel("Enter Location")
-        self.enter_loction_box = QLineEdit(self.directory)
-        self.enter_loction_box.setMinimumSize(QSize(400, 0))
-        self.enter_loction_box.move(20, 20)
-
-        self.find_button = QPushButton()
-        self.find_button.setText("...")
-        self.find_button.setToolTip("find_button")
-        self.find_button.setShortcut("ctrl+f")
-        self.find_button.clicked.connect(self.select)
-
-        self.load_button = QPushButton()
-        self.load_button.setText("Load")
-        self.load_button.setToolTip("load_button")
-        self.load_button.setShortcut("ctrl+l")
-        self.load_button.clicked.connect(self.load)
-
-        self.default_button = QPushButton()
-        self.default_button.setText("Default")
-        self.default_button.setToolTip("default_button")
-        self.default_button.setShortcut("ctrl+d")
-        self.default_button.clicked.connect(self.default)
-
-        self.enter_search_text = QLabel("Search:")
-        self.enter_search_box = QLineEdit()
-
-        self.search_button = QPushButton()
-        self.search_button.setText("Search")
-        self.search_button.setToolTip("search_button")
-        self.search_button.setShortcut("ctrl+s")
-        self.search_button.clicked.connect(self.search)
-
-        self.apply_text = QLabel()
-        self.apply_button = QPushButton()
-        self.apply_button.setText("Apply")
-        self.apply_button.setToolTip("apply_button")
-        self.apply_button.setShortcut("ctrl+a")
-        self.apply_button.clicked.connect(self.apply)
-
-        self.close_button = QPushButton()
-        self.close_button.setText("Close")
-        self.close_button.setToolTip("close_button")
-        self.close_button.setShortcut("ctrl+c")
-        self.close_button.clicked.connect(self.close)
-
-        vbox.addWidget(self.title)
-        hbox1.addWidget(self.enter_loction_text)
-        hbox1.addWidget(self.enter_loction_box)
-        hbox1.addWidget(self.find_button)
-        hbox1.addWidget(self.default_button)
-        hbox3.addWidget(self.apply_text)
-        hbox3.addWidget(self.close_button)
-        hbox3.addWidget(self.apply_button)
-        vbox.addLayout(hbox1)
-        vbox.addLayout(hbox2)
-        vbox.addWidget(sbox)
-        vbox.addLayout(hbox3)
-
-        vbox.setAlignment(Qt.AlignCenter)
-        vbox.setSpacing(25)
-
-        base = QWidget()
-        base.setObjectName("base")
-        base.setLayout(vbox)
-
-        baseLyt = QVBoxLayout()
-        baseLyt.addWidget(base)
-        baseLyt.setContentsMargins(QMargins())
-        self.setLayout(baseLyt)
-
-    def select(self):
-        self.disable_buttons()
-        directory = QFileDialog.getExistingDirectory(self, 'Select directory')
-        if directory:
-            self.settings.setValue("settings/folder", directory)
-            self.enter_loction_box.setText(directory)
-        qApp.exit(MultiMonitorLock.EXIT_CODE_REBOOT)
-        self.enable_buttons()
-
-    def item(self):
-        self.disable_buttons()
-        self.image_file = self.sender().objectName()
-        self.apply_text.setText(self.image_file)
-        self.enable_buttons()
+import GUI
+import threading as th
+import webbrowser
+import Splash
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk, GdkPixbuf, Gdk, GLib # noqa
 
 
-    def load(self):
-        self.disable_buttons()
-        self.directory = self.enter_loction_box.text()
-        qApp.exit(MultiMonitorLock.EXIT_CODE_REBOOT)
-        self.enable_buttons()
-
-    def default(self):
-        self.disable_buttons()
-        self.enter_loction_box.setText(self.folder)
-        self.settings.setValue("settings/folder", self.folder)
-        qApp.exit(MultiMonitorLock.EXIT_CODE_REBOOT)
-        self.enable_buttons()
-
-    def search(self):
-        self.disable_buttons()
-        self.enable_buttons()
-
-    def apply(self):
-        self.disable_buttons()
-        if self.image_file is not None:
-            command = ["multimonitorlock", "-u", self.image_file]
-            self.apply_text.setText(self.image_file)
-            print(command)
-            with fn.subprocess.Popen(command, bufsize=1, stdout=fn.subprocess.PIPE, universal_newlines=True) as p:
-                for line in p.stdout:
-                    print(line)
-                    QApplication.processEvents()
-                    result = re.sub("[\(\[].*?[\)\]]", "", line)
-                    self.apply_text.setText(str(result))
-                    self.image_file = None
-        self.enable_buttons()
-
-    def close(self, event):
-        self.disable_buttons()
-        reply = QMessageBox.question(
-            self, "Message",
-            "Are you sure you want to quit?",
-            QMessageBox.Close | QMessageBox.Cancel)
-
-        if reply == QMessageBox.Close:
-            app.quit()
-        else:
-            pass
-            self.enable_buttons()
-
-    def disable_buttons(self):
-        self.find_button.setEnabled(False)
-        self.load_button.setEnabled(False)
-        self.default_button.setEnabled(False)
-        self.search_button.setEnabled(False)
-        self.close_button.setEnabled(False)
-        self.apply_button.setEnabled(False)
-
-    def enable_buttons(self):
-        self.find_button.setEnabled(True)
-        self.load_button.setEnabled(True)
-        self.default_button.setEnabled(True)
-        self.search_button.setEnabled(True)
-        self.close_button.setEnabled(True)
-        self.apply_button.setEnabled(True)
-
-    def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Escape:
-            reply = QMessageBox.question(
-                self, "Message",
-                "Are you sure you want to quit?",
-                QMessageBox.Close | QMessageBox.Cancel)
-
-            if reply == QMessageBox.Close:
-                app.quit()
-            else:
-                pass
-
-# SPLASH SCREEN
-class SplashScreen(QMainWindow):
+class Main(Gtk.Window):
     def __init__(self):
-        QMainWindow.__init__(self)
-        self.ui = Ui_SplashScreen()
-        self.ui.setupUi(self)
+        super(Main, self).__init__(title="MultiMonitorLock")
+        self.set_border_width(10)
+        self.set_default_size(700, 460)
+        self.connect("delete-event", self.close)
+        self.set_icon_from_file(fn.os.path.join(
+            GUI.base_dir, 'images/eoslinux.svg'))
+        self.set_position(Gtk.WindowPosition.CENTER)
 
-        ## UI ==> INTERFACE CODES
-        ########################################################################
+        self.timeout_id = None
+        self.image_path = None
 
-        ## REMOVE TITLE BAR
-        self.setWindowFlag(QtCore.Qt.FramelessWindowHint)
-        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        if not fn.os.path.isdir(fn.config):
+            fn.os.mkdir(fn.config)
 
+        if not fn.os.path.isfile(fn.config + fn.settings):
+            with open(fn.config + fn.settings, "w") as f:
+                f.write("path=")
+                f.close()
 
-        ## DROP SHADOW EFFECT
-        self.shadow = QGraphicsDropShadowEffect(self)
-        self.shadow.setBlurRadius(20)
-        self.shadow.setXOffset(0)
-        self.shadow.setYOffset(0)
-        self.shadow.setColor(QColor(0, 0, 0, 60))
-        self.ui.dropShadowFrame.setGraphicsEffect(self.shadow)
+        self.loc = Gtk.Entry()
+        self.search = Gtk.Entry()
+        self.status = Gtk.Label(label="")
+        self.hbox3 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,
+                             spacing=10)
+        scrolled = Gtk.ScrolledWindow()
+        scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
 
-        ## QTIMER ==> START
-        self.timer = QtCore.QTimer()
-        self.timer.timeout.connect(self.progress)
-        # TIMER IN MILLISECONDS
-        self.timer.start(35)
+        self.fb = Gtk.FlowBox()
+        self.fb.set_valign(Gtk.Align.START)
+        self.fb.set_max_children_per_line(6)
+        self.fb.set_selection_mode(Gtk.SelectionMode.SINGLE)
+        self.fb.connect("child-activated", self.on_item_clicked)
+        # self.create_flowbox(fb)
 
-        # CHANGE DESCRIPTION
+        scrolled.add(self.fb)
 
-        # Initial Text
-        self.ui.label_description.setText("<strong>WELCOME</strong> TO MULTIMONITORLOCK-GUI")
+        self.hbox3.pack_start(scrolled, True, True, 0)
 
-        # Change Texts
-        QtCore.QTimer.singleShot(2000, lambda: self.ui.label_description.setText("<strong>LOADING</strong> USER INTERFACE"))
+        splScr = Splash.splashScreen()
 
+        while Gtk.events_pending():
+            Gtk.main_iteration()
+        # self.create_flowbox(self.loc.get_text())
+        t = th.Thread(target=self.create_flowbox,
+                      args=(self.loc.get_text(), False))
+        t.daemon = True
+        t.start()
+        t.join()
 
-        ## SHOW ==> MAIN WINDOW
-        ########################################################################
-        self.show()
-        ## ==> END ##
+        splScr.destroy()
 
-    ## ==> APP FUNCTIONS
-    ########################################################################
-    def progress(self):
+        GUI.GUI(self, Gtk, GdkPixbuf, Gdk, th, fn)
 
-        global counter
+        with open("/tmp/mml.lock", "w") as f:
+            f.write("")
+            f.close()
 
-        # SET VALUE TO PROGRESS BAR
-        self.ui.progressBar.setValue(counter)
+    def on_default_clicked(self, widget, fb):
+        # self.fb.select_all()
 
-        # CLOSE SPLASH SCREE AND OPEN APP
-        if counter > 100:
-            # STOP TIMER
-            self.timer.stop()
+        for x in self.fb.get_children():
+            self.fb.remove(x)
 
-            # SHOW MAIN WINDOW
-            self.main = MultiMonitorLock()
-            self.main.show()
+        t = th.Thread(target=self.create_flowbox,
+                      args=(self.loc.get_text(), True))
+        t.daemon = True
+        t.start()
 
-            # CLOSE SPLASH SCREEN
-            self.close()
+    def on_support_clicked(self, widget):
+        sup = Support.Support(self)
+        response = sup.run()
 
-        # INCREASE COUNTER
-        counter += 1
+        if response == Gtk.ResponseType.DELETE_EVENT:
+            sup.destroy()
 
+    def on_apply_clicked(self, widget):
+        # print(str(int(self.blur.get_value())/100))
+        if self.image_path is None:
+            fn.show_in_app_notification(self,
+                                        "You need to select an image first")
+        else:
+            self.btnset.set_sensitive(False)
+            self.status.set_text("creating lockscreen images....wait for the message at the top")
+            t = th.Thread(target=self.set_lockscreen, args=())
+            t.daemon = True
+            t.start()
 
-if __name__ == '__main__':
-    currentExitCode = MultiMonitorLock.EXIT_CODE_REBOOT
-    while currentExitCode == MultiMonitorLock.EXIT_CODE_REBOOT:
+    def set_lockscreen(self):
+        command = ["multimonitorlock", "-u", self.image_path,
+                       "--blur", str(int(self.blur.get_value())/100)]
         try:
-            app = QApplication(sys.argv)
-        except RuntimeError:
-            app = QCoreApplication.instance()
-        QCoreApplication.setOrganizationName("The-Repo-Club")
-        QCoreApplication.setOrganizationDomain("github.com/The-Repo-Club")
-        QCoreApplication.setApplicationName("MultiMonitorLock-Gui")
-        Gui = SplashScreen()
-        Gui.show()
-        currentExitCode = app.exec()
-        app = None
+            #with fn.subprocess.Popen(command, bufsize=1, stdout=fn.subprocess.PIPE, universal_newlines=True) as p:
+            #    for line in p.stdout:
+            #        GLib.idle_add(self.status.set_text, line.strip())
+            fn.subprocess.call(command, shell=False)
+            fn.show_in_app_notification(self, "Lockscreen set successfully")
+            GLib.idle_add(self.btnset.set_sensitive, True)
+            GLib.idle_add(self.status.set_text, "")
+        except:  # noqa
+            GLib.idle_add(self.status.set_text, "ERROR: is multimonitorlock installed?")
+            GLib.idle_add(self.btnset.set_sensitive, True)
+
+    def on_item_clicked(self, widget, data):
+        for x in data:
+            self.image_path = x.get_name()
+        # print(widget.get_selected_children())
+
+    def on_load_clicked(self, widget, fb):
+        # self.fb.select_all()
+
+        for x in self.fb.get_children():
+            self.fb.remove(x)
+
+        t = th.Thread(target=self.create_flowbox,
+                      args=(self.loc.get_text(), False))
+        t.daemon = True
+        t.start()
+
+    def on_search_clicked(self, widget):
+        for x in self.fb.get_children():
+            self.fb.remove(x)
+
+        t = th.Thread(target=self.create_flowbox,
+                      args=(self.loc.get_text(), False))
+        t.daemon = True
+        t.start()
+
+    def on_browse_clicked(self, widget):
+        dialog = Gtk.FileChooserDialog(
+                                       title="Please choose a file",
+                                       action=Gtk.FileChooserAction.SELECT_FOLDER,)
+        dialog.set_current_folder(fn.home)
+        dialog.add_buttons(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, "Open",
+                           Gtk.ResponseType.OK)
+        dialog.connect("response", self.open_response_browse)
+
+        dialog.show()
+
+    def open_response_browse(self, dialog, response):
+        if response == Gtk.ResponseType.OK:
+            self.loc.set_text(dialog.get_filename())
+            with open(fn.config + fn.settings, "w") as f:
+                f.write("path=" + dialog.get_filename())
+                f.close()
+            dialog.destroy()
+        elif response == Gtk.ResponseType.CANCEL:
+            dialog.destroy()
+
+    def create_flowbox(self, text, default):
+        if not default:
+            paths = fn.get_saved_path()
+            if len(paths) < 1:
+                if len(text) < 1:
+                    paths = "/usr/share/backgrounds/eos_wallpapers_community"
+                    if not fn.os.path.isdir(paths):
+                        paths = "/usr/share/backgrounds/eos_wallpapers_community"
+                    if not fn.os.path.isdir(paths):
+                        return 0
+                else:
+                    paths = text
+        else:
+            paths = "/usr/share/backgrounds/eos_wallpapers_community"
+            if not fn.os.path.isdir(paths):
+                paths = "/usr/share/backgrounds/eos_wallpapers_community"
+            if not fn.os.path.isdir(paths):
+                return 0
+
+        if paths.endswith("/"):
+            paths = paths[:-1]
+
+        if not fn.os.path.isdir(paths):
+            GLib.idle_add(self.status.set_text, "That directory not found!")
+            return 0
+        try:
+            ext = [".png", ".jpg", ".jpeg"]
+            images = [x for x in fn.os.listdir(paths) for j in ext if j in x.lower() if self.search.get_text() in x] # noqa
+            GLib.idle_add(self.status.set_text, "Loading images...")
+            for image in images:
+                # fbchild = Gtk.FlowBoxChild()
+                pb = GdkPixbuf.Pixbuf().new_from_file_at_size(paths + "/" + image, 328, 328) # noqa
+                pimage = Gtk.Image()
+                pimage.set_name(paths + "/" + image)
+                pimage.set_from_pixbuf(pb)
+                # print(image)
+                # fbchild.add(pimage)
+                GLib.idle_add(self.fb.add,pimage)
+                pimage.show_all()
+        except Exception as e:
+            print(e)
+        GLib.idle_add(self.status.set_text, "")
+
+    def on_social_clicked(self, widget, event, link):
+        t = th.Thread(target=self.weblink, args=(link,))
+        t.daemon = True
+        t.start()
+
+    def weblink(self, link):
+        webbrowser.open_new_tab(link)
+
+    def tooltip_callback(self, widget, x, y, keyboard_mode, tooltip, text):
+        tooltip.set_text(text)
+        return True
+
+    def MessageBox(self, title, message):
+        md = Gtk.MessageDialog(parent=self, flags=0,
+                               message_type=Gtk.MessageType.INFO,
+                               buttons=Gtk.ButtonsType.OK, text=title)
+        md.format_secondary_markup(message)
+        md.run()
+        md.destroy()
+
+    def close(self, widget, data):
+        fn.os.unlink("/tmp/mml.lock")
+        Gtk.main_quit()
+
+
+if __name__ == "__main__":
+    if not fn.os.path.isfile("/tmp/mml.lock"):
+        with open("/tmp/mml.pid", "w") as f:
+            f.write(str(fn.os.getpid()))
+            f.close()
+        w = Main()
+        w.show_all()
+        Gtk.main()
+    else:
+        md = Gtk.MessageDialog(parent=Main(),
+                               flags=0,
+                               message_type=Gtk.MessageType.INFO,
+                               buttons=Gtk.ButtonsType.YES_NO,
+                               text="Lock File Found")
+        md.format_secondary_markup(
+            "The lock file has been found. This indicates there is already an instance of <b>MultiMonitorLock GUI</b> running.\n\
+click yes to remove the lock file and try running again")  # noqa
+
+        result = md.run()
+        md.destroy()
+
+        if result in (Gtk.ResponseType.OK, Gtk.ResponseType.YES):
+            pid = ""
+            with open("/tmp/mml.pid", "r") as f:
+                line = f.read()
+                pid = line.rstrip().lstrip()
+                f.close()
+
+            if fn.checkIfProcessRunning(int(pid)):
+                fn.MessageBox(Main(), "Application Running!",
+                                     "You first need to close the existing application")  # noqa
+            else:
+                fn.os.unlink("/tmp/mml.lock")

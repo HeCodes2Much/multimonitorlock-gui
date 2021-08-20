@@ -1,41 +1,86 @@
-# =====================================================
-#                  Author The-Repo-Club
-# =====================================================
+# =================================================================
+# =                     Author: TheRepoClub                       =
+# =================================================================
 
-import subprocess
 import os
-import shutil
-from pathlib import Path
-import configparser
+import subprocess
+import threading
+import psutil
+import gi
+from os.path import expanduser
+gi.require_version('Gtk', '3.0')
+from gi.repository import GLib, Gtk  # noqa
 
-home = os.path.expanduser("~")
+
+home = expanduser("~")
 base_dir = os.path.dirname(os.path.realpath(__file__))
-if os.path.isfile(home + "/.config/multilock/gui.conf"):
-    config = home + "/.config/multilock/gui.conf"
-else:
-    config = ''.join([str(Path(__file__).parents[3]), "/etc/multimonitorlock-gui.conf"])
-root_config = ''.join([str(Path(__file__).parents[3]), "/etc/multimonitorlock-gui.conf"])
+config = home + "/.config/multilock/"
+settings = "gui.conf"
 
-def _get_position(lists, value):
-    data = [string for string in lists if value in string]
-    position = lists.index(data[0])
+# ================================================
+#                   GLOBALS
+# ================================================
+
+# ================================================
+#               NOTIFICATIONS
+# ================================================
+
+
+def _get_position(lists, string):
+    nlist = [x for x in lists if string in x]
+    position = lists.index(nlist[0])
     return position
 
-def get_config(self, config):
-    try:
-        self.parser = configparser.RawConfigParser()
-        self.parser.read(config)
 
-        # Set some safe defaults
-        self.folder = "/usr/share/backgrounds"
+def get_saved_path():
+    with open(config + settings, "r") as f:
+        lines = f.readlines()
+        f.close()
+    pos = _get_position(lines, "path=")
 
-        # Check if we're using HAL, and init it as required.
-        if self.parser.has_section("settings"):
-            if self.parser.has_option("settings", "folder"):
-                self.folder = self.parser.get("settings", "folder")
-                
-    except Exception as e:
-        print(e)
-        os.unlink(home + "/.config/multilock/gui.conf")
-        if not os.path.isfile(home + "/.config/multilock/gui.conf"):
-            shutil.copy(root_config, home + "/.config/multilock/gui.conf")
+    return lines[pos].split("=")[1].strip()
+
+
+def show_in_app_notification(self, message):
+    if self.timeout_id is not None:
+        GLib.source_remove(self.timeout_id)
+        self.timeout_id = None
+
+    self.notification_label.set_markup("<span foreground=\"white\">" +
+                                       message + "</span>")
+    self.notification_revealer.set_reveal_child(True)
+    self.timeout_id = GLib.timeout_add(3000, timeOut, self)
+
+
+def timeOut(self):
+    close_in_app_notification(self)
+
+
+def close_in_app_notification(self):
+    self.notification_revealer.set_reveal_child(False)
+    GLib.source_remove(self.timeout_id)
+    self.timeout_id = None
+
+
+def MessageBox(self, title, message):
+    md2 = Gtk.MessageDialog(parent=self,
+                            flags=0,
+                            message_type=Gtk.MessageType.INFO,
+                            buttons=Gtk.ButtonsType.OK,
+                            text=title)
+    md2.format_secondary_markup(message)
+    md2.run()
+    md2.destroy()
+
+
+def checkIfProcessRunning(processName):
+    for proc in psutil.process_iter():
+        try:
+            pinfo = proc.as_dict(attrs=['pid', 'name', 'create_time'])
+            if processName == pinfo['pid']:
+                return True
+        except (psutil.NoSuchProcess,
+                psutil.AccessDenied,
+                psutil.ZombieProcess):
+            pass
+    return False
