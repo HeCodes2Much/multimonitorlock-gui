@@ -1,3 +1,3 @@
-##MultiMonitorLock GUI
+## MultiMonitorLock GUI
 
 ![Screen](screen.png)
