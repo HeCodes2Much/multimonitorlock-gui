@@ -16,9 +16,9 @@ from gi.repository import Gtk, GdkPixbuf, Gdk, GLib # noqa
 
 class Main(Gtk.Window):
     def __init__(self):
-        super(Main, self).__init__(title="MultiMonitorLock")
+        super(Main, self).__init__(title="MultiMonitorLock-Gui")
         self.set_border_width(10)
-        self.set_default_size(700, 460)
+        self.set_default_size(1200, 860)
         self.connect("delete-event", self.close)
         self.set_icon_from_file(fn.os.path.join(
             GUI.base_dir, 'images/eoslinux.svg'))
